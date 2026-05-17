@@ -34,13 +34,10 @@ app.use('/api', ratesRouter);
 app.use('/api', myGoldRouter);
 app.use('/api', soldRouter);
 
-// Serve React build in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/dist')));
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-    });
-}
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'Backend is running' });
+});
 
 // MongoDB Connection & Startup
 async function start() {
