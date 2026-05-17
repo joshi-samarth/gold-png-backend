@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: gold-png-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        scope: build,runtime
+      - key: PORT
+        value: 3000
+      - key: CORS_ORIGIN
+        scope: runtime
+      - key: NODE_ENV
+        value: production
