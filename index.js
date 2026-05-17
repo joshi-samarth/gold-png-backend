@@ -15,9 +15,16 @@ const GoldRate = require('./models/GoldRate');
 
 const app = express();
 
-// Middleware
+// Middleware - CORS Configuration
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://gold-png-frontend-8ze2.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
