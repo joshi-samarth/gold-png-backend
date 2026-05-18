@@ -24,10 +24,32 @@ const allowedOrigins = [
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
-app.use(cors({
-    origin: allowedOrigins,
+// Dynamic CORS origin checker to allow all Vercel preview deployments
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or Postman)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is in whitelist
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        // Allow all Vercel deployments (*.vercel.app)
+        else if (origin.includes('vercel.app')) {
+            callback(null, true);
+        }
+        // Allow localhost for development
+        else if (origin.includes('localhost')) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('CORS not allowed'));
+        }
+    },
     credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Compression middleware for faster responses
 app.use(compression());
