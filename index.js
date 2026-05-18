@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 require('dotenv').config();
 
 const ratesRouter = require('./routes/rates');
@@ -27,7 +28,21 @@ app.use(cors({
     origin: allowedOrigins,
     credentials: true
 }));
+
+// Compression middleware for faster responses
+app.use(compression());
+
+// Express middleware
+// Express middleware
 app.use(express.json());
+
+// Cache middleware for API responses (1 hour for data)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        res.set('Cache-Control', 'public, max-age=300'); // 5 minutes for API data
+    }
+    next();
+});
 
 // API Routes
 app.use('/api', ratesRouter);
