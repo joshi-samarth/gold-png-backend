@@ -139,17 +139,6 @@ function buildAlertMessage(oldPrices, newPrices) {
         message += '\n';
     }
 
-    // Silver
-    const changeSilver = changes.silver.new - changes.silver.old;
-    const signSilver = changeSilver > 0 ? '📈' : changeSilver < 0 ? '📉' : '➡️';
-    message += `⚪ <b>Silver</b>: ${signSilver}\n`;
-    message += `   ${formatPrice(changes.silver.old)} → ${formatPrice(changes.silver.new)}\n`;
-    if (changeSilver !== 0) {
-        message += `   <i>${changeSilver > 0 ? '+' : ''}${formatPrice(changeSilver)}</i>\n\n`;
-    } else {
-        message += '\n';
-    }
-
     // Timestamp
     message += `⏰ <i>${formatDateTime()}</i>\n`;
 
