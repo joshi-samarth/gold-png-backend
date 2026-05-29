@@ -84,6 +84,37 @@ router.post('/cron/fetch-gold', validateCronSecret, async (req, res) => {
             });
         }
 
+        // TEST TELEGRAM - TEMPORARY (remove after testing)
+        console.log('[CRON-API] SENDING TEST TELEGRAM NOTIFICATION...');
+        try {
+            await sendTelegramAlert(
+                {
+                    gold24ct999: 8000,
+                    gold22ct: 7000,
+                    gold18ct: 6000,
+                    gold24ct995: 5500,
+                    gold24ct995gw: 5400,
+                    gold14ct: 4000,
+                    silver: 900,
+                    silverCoin: 1200
+                },
+                {
+                    gold24ct999: 8100,
+                    gold22ct: 7100,
+                    gold18ct: 6100,
+                    gold24ct995: 5600,
+                    gold24ct995gw: 5500,
+                    gold14ct: 4100,
+                    silver: 950,
+                    silverCoin: 1250
+                }
+            );
+            console.log('[CRON-API] TEST TELEGRAM SENT SUCCESSFULLY!');
+        } catch (error) {
+            console.error('[CRON-API] TEST TELEGRAM FAILED:', error.message);
+        }
+        // END TEST TELEGRAM
+
         // Get latest record to check for duplicates
         const latestRecord = await GoldRate.findOne().sort({ date: -1 });
         let priceChanged = false;
