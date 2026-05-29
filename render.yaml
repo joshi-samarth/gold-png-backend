@@ -14,3 +14,14 @@ services:
         scope: runtime
       - key: NODE_ENV
         value: production
+
+cronjobs:
+  - name: gold-rate-fetcher
+    runtime: node
+    schedule: "*/15 3-15 * * *"
+    command: npm run cron
+    envVars:
+      - key: MONGO_URI
+        scope: runtime
+      - key: NODE_ENV
+        value: production

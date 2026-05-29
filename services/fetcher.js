@@ -15,7 +15,8 @@ async function fetchRates() {
                     Origin: 'https://pngadgilandsons.com',
                     Referer: 'https://pngadgilandsons.com/',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
+                },
+                timeout: 30000  // 30-second timeout to accommodate slow API (production takes ~20s)
             }
         );
 
@@ -35,7 +36,11 @@ async function fetchRates() {
             silverCoin: r.silverBarPrice
         };
     } catch (error) {
-        console.error('Error fetching rates:', error.message);
+        if (error.code === 'ECONNABORTED') {
+            console.error('API request timeout (30s exceeded):', error.message);
+        } else {
+            console.error('Error fetching rates:', error.message);
+        }
         throw error;
     }
 }
@@ -43,9 +48,17 @@ async function fetchRates() {
 async function fetchAndSave(dateStr) {
     const maxRetries = 3;
     const delays = [5000, 10000, 15000];
+    const TOTAL_TIMEOUT = 30000; // 30-second total timeout (prevents overlap with 15-min cron)
+    const startTime = Date.now();
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
+            // Check if we're running out of time (exceed 30 seconds total)
+            const elapsed = Date.now() - startTime;
+            if (elapsed > TOTAL_TIMEOUT) {
+                throw new Error(`Total operation timeout exceeded (${elapsed}ms > ${TOTAL_TIMEOUT}ms)`);
+            }
+
             const rates = await fetchRates();
 
             if (!rates.gold22ct || rates.gold22ct === 0) {
@@ -58,12 +71,24 @@ async function fetchAndSave(dateStr) {
                 { upsert: true, new: true }
             );
 
-            console.log(`✓ Gold rates saved for ${dateStr}`);
+            console.log(`✓ Gold rates saved for ${dateStr} (${Date.now() - startTime}ms)`);
             return doc;
         } catch (error) {
-            console.error(`Attempt ${attempt + 1}/${maxRetries} failed:`, error.message);
+            const elapsed = Date.now() - startTime;
+            console.error(`Attempt ${attempt + 1}/${maxRetries} failed (${elapsed}ms): ${error.message}`);
+
+            // Don't retry if we've already hit timeout
+            if (elapsed > TOTAL_TIMEOUT) {
+                throw new Error(`Timeout: Exceeded ${TOTAL_TIMEOUT}ms limit`);
+            }
+
             if (attempt < maxRetries - 1) {
-                await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+                const waitTime = delays[attempt];
+                // Check if waiting will exceed timeout
+                if (elapsed + waitTime > TOTAL_TIMEOUT) {
+                    throw new Error(`Would exceed timeout waiting for retry (need ${waitTime}ms, only ${TOTAL_TIMEOUT - elapsed}ms left)`);
+                }
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             } else {
                 throw error;
             }

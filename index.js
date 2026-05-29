@@ -8,7 +8,6 @@ require('dotenv').config();
 const ratesRouter = require('./routes/rates');
 const myGoldRouter = require('./routes/mygold');
 const soldRouter = require('./routes/sold');
-const { setupCron } = require('./services/cron');
 const { backfill, istDate } = require('./services/fetcher');
 const { seedSoldEntries } = require('./services/seed');
 const MyGold = require('./models/MyGold');
@@ -99,36 +98,11 @@ async function start() {
         // Backfill historical data
         await backfill();
 
-        // Check if today's record is recent enough
-        const today = istDate();
-        const todayDoc = await GoldRate.findOne({ date: today });
-        if (!todayDoc) {
-            const { fetchAndSave } = require('./services/fetcher');
-            try {
-                await fetchAndSave(today);
-                console.log('✓ Fetched today\'s rates');
-            } catch (error) {
-                console.error('Failed to fetch today\'s rates:', error.message);
-            }
-        } else if (todayDoc.fetchedAt) {
-            const hoursSinceFetch = (Date.now() - todayDoc.fetchedAt) / (1000 * 60 * 60);
-            if (hoursSinceFetch > 4) {
-                const { fetchAndSave } = require('./services/fetcher');
-                try {
-                    await fetchAndSave(today);
-                    console.log('✓ Updated today\'s rates (older than 4 hours)');
-                } catch (error) {
-                    console.error('Failed to update today\'s rates:', error.message);
-                }
-            }
-        }
-
-        // Setup cron jobs
-        setupCron();
-
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
             console.log(`✓ Server running on http://localhost:${PORT}`);
+            console.log('✓ Note: Gold rates are now fetched by Render Cron Job (node scripts/goldTracker.js)');
+            console.log('✓ Server only handles API requests - no in-process scheduling');
         });
     } catch (error) {
         console.error('Startup error:', error.message);
