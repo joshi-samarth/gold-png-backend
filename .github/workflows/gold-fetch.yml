@@ -1,0 +1,33 @@
+name: Gold Price Fetcher
+
+# Run every 15 minutes from 9 AM to 9 PM IST (3 AM to 3 PM UTC)
+on:
+  schedule:
+    - cron: '*/15 3-15 * * *'  # Every 15 minutes, 3 AM-3 PM UTC (8:30 AM-8:30 PM IST)
+
+jobs:
+  fetch-gold:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Fetch Gold Prices
+        run: |
+          # Call the backend API endpoint with secure header
+          curl -X POST \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.BACKEND_URL }}/api/cron/fetch-gold" \
+            --retry 3 \
+            --retry-delay 5 \
+            --max-time 60 \
+            --connect-timeout 10 \
+            -w "\nHTTP Status: %{http_code}\n"
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      
+      - name: Log Execution
+        if: always()
+        run: |
+          echo "Gold price fetch completed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "Next run in 15 minutes..."

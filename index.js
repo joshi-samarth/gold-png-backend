@@ -8,6 +8,7 @@ require('dotenv').config();
 const ratesRouter = require('./routes/rates');
 const myGoldRouter = require('./routes/mygold');
 const soldRouter = require('./routes/sold');
+const cronRouter = require('./routes/cron');
 const { backfill, istDate } = require('./services/fetcher');
 const { seedSoldEntries } = require('./services/seed');
 const MyGold = require('./models/MyGold');
@@ -69,6 +70,7 @@ app.use((req, res, next) => {
 app.use('/api', ratesRouter);
 app.use('/api', myGoldRouter);
 app.use('/api', soldRouter);
+app.use('/api', cronRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
